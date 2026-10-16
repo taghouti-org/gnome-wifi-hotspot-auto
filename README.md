@@ -51,6 +51,11 @@ Hotspot on/off, failures, and devices joining/leaving (can be disabled in Settin
 ## Limitations
 - The hotspot must use the **same channel** as your Wi-Fi connection (single radio), so speed is shared and a 5 GHz network gives a 5 GHz-only hotspot.
 - **DFS channels** (5.26–5.72 GHz, e.g. channel 132): many cards refuse to host an AP there. You'll get a notification and keep your connection, but no hotspot on that network.
+  **Workaround:** if the network also broadcasts on 2.4 GHz, force your laptop onto it so the hotspot runs there too:
+  ```bash
+  nmcli con modify "<your-wifi>" 802-11-wireless.band bg      # undo: ... 802-11-wireless.band ""
+  nmcli con up "<your-wifi>"
+  ```
 - The hotspot password is stored in plain text in GSettings.
 - Clients get Cloudflare/Google DNS (1.1.1.1, 8.8.8.8); internal/VPN DNS names are not resolvable from hotspot clients.
 
