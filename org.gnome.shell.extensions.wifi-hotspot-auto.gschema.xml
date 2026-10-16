@@ -10,6 +10,7 @@
       <default>[]</default>
       <summary>Wi-Fi networks that enable the hotspot in auto mode</summary>
     </key>
+    <key name="notifications" type="b"><default>true</default><summary>Show notifications</summary></key>
     <key name="hotspot-ssid" type="s"><default>'MyPC-Hotspot'</default><summary>Hotspot name</summary></key>
     <key name="hotspot-password" type="s"><default>''</default><summary>Hotspot password (min 8 chars)</summary></key>
     <key name="wifi-interface" type="s"><default>''</default><summary>Physical Wi-Fi interface (empty = auto-detect)</summary></key>
