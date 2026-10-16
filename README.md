@@ -21,7 +21,7 @@ NetworkManager can't run a hotspot on the interface that is also connected as a 
 
 ## Install
 ```bash
-git clone https://gist.github.com/<GIST_ID>.git wifi-hotspot-auto
+git clone https://gist.github.com/267a91e305a469835a45992c9de30db0.git wifi-hotspot-auto
 cd wifi-hotspot-auto
 bash install.sh
 ```
