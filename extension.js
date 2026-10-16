@@ -73,7 +73,10 @@ class Indicator extends PanelMenu.Button {
 
         // On/off switch
         this._toggle = new PopupMenu.PopupSwitchMenuItem(_('Hotspot'), false);
-        this._toggle.connect('toggled', (_item, state) => ext.setEnabled(state));
+        this._toggle.connect('toggled', (_item, state) => {
+            if (this._syncing) return;
+            ext.setEnabled(state);
+        });
         this.menu.addMenuItem(this._toggle);
 
         this._status = new PopupMenu.PopupMenuItem('', {reactive: false});
@@ -125,7 +128,10 @@ class Indicator extends PanelMenu.Button {
     update(s) {
         const {mode, active, ssid, busy, error, hotspotSsid, channel, clients, traffic} = s;
 
-        this._toggle.setToggleState(active || busy && s.want);
+        // Show the requested state, not the (lagging) actual one, so the switch never snaps back.
+        this._syncing = true;
+        this._toggle.setToggleState(s.want && !error);
+        this._syncing = false;
         this._toggle.label.text = busy ? _('Hotspot (working…)') : _('Hotspot');
 
         for (const [id, {item}] of Object.entries(this._modeItems))
@@ -290,7 +296,11 @@ export default class WifiHotspotAuto extends Extension {
     // ---------------------------------------------------------------- state
     setEnabled(on) {
         this._log(`Manual toggle: ${on ? 'ON' : 'OFF'} (mode -> ${on ? 'always' : 'never'})`);
-        this.settings.set_string('mode', on ? 'always' : 'never');
+        // Defer so the settings cascade runs outside the switch's own signal emission.
+        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+            this.settings?.set_string('mode', on ? 'always' : 'never');
+            return GLib.SOURCE_REMOVE;
+        });
     }
 
     _wifiIface() {
