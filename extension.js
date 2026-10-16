@@ -66,6 +66,7 @@ class Indicator extends PanelMenu.Button {
         for (const [id, item] of Object.entries(this._modeItems))
             item.setOrnament(id === mode ? PopupMenu.Ornament.DOT : PopupMenu.Ornament.NONE);
         this._icon.opacity = active ? 255 : 110;
+        this._icon.style = active ? 'color: #57e389;' : '';
         const state = busy ? _('working…') : active ? _('ON') : _('off');
         this._status.label.text = `${_('Hotspot')}: ${state}  ·  ${_('Wi-Fi')}: ${ssid ?? _('not connected')}`;
         this._addCurrent.visible = !!ssid;
