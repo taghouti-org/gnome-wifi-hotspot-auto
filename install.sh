@@ -11,9 +11,13 @@ cp "$here"/org.gnome.shell.extensions.wifi-hotspot-auto.gschema.xml "$DEST/schem
 cp "$here/gnome-hotspot-helper" "$here/org.gnome.hotspotext.helper.policy" "$DEST/helper/"
 glib-compile-schemas "$DEST/schemas"
 
+command -v hostapd >/dev/null || { echo "Installing hostapd..."; sudo apt-get install -y hostapd; }
 echo "Installing root helper (sudo password needed)..."
 sudo install -m 755 "$here/gnome-hotspot-helper" /usr/local/bin/gnome-hotspot-helper
 sudo install -m 644 "$here/org.gnome.hotspotext.helper.policy" /usr/share/polkit-1/actions/org.gnome.hotspotext.helper.policy
+
+printf '[keyfile]\nunmanaged-devices=interface-name:ap0\n' | sudo tee /etc/NetworkManager/conf.d/99-hotspot-ext.conf >/dev/null
+sudo nmcli general reload conf 2>/dev/null || true
 
 gnome-extensions enable "$UUID" 2>/dev/null || true
 echo
