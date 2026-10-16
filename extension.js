@@ -258,7 +258,9 @@ export default class WifiHotspotAuto extends Extension {
         label.clutter_text.line_wrap = true;
         label.clutter_text.selectable = true;
         const scroll = new St.ScrollView({style: 'min-width: 640px; max-width: 760px; height: 420px;', overlay_scrollbars: true});
-        scroll.set_child(label);
+        const holder = new St.BoxLayout({vertical: true});
+        holder.add_child(label);
+        scroll.set_child(holder);
         dialog.contentLayout.add_child(new St.Label({text: _('Wi-Fi Hotspot logs'), style: 'font-weight: bold; padding-bottom: 8px;'}));
         dialog.contentLayout.add_child(scroll);
 
