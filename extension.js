@@ -110,7 +110,7 @@ export default class WifiHotspotAuto extends Extension {
         if (this._timer) GLib.source_remove(this._timer);
         this._timer = 0;
         this._unwatchDevice();
-        if (this._client && this._devAddedId) this._client.disconnect(this._devAddedId);
+        if (this._client && this._devAddedId) GObject.signal_handler_disconnect(this._client, this._devAddedId);
         this._client = null;
         this._indicator?.destroy();
         this._indicator = null;
@@ -128,7 +128,7 @@ export default class WifiHotspotAuto extends Extension {
 
     _unwatchDevice() {
         if (this._apWatch) {
-            this._apWatch.dev.disconnect(this._apWatch.id);
+            GObject.signal_handler_disconnect(this._apWatch.dev, this._apWatch.id);
             this._apWatch = null;
         }
     }
