@@ -12,11 +12,19 @@ re='^[a-zA-Z0-9_-]{1,15}$'
 [[ $parent =~ $re && $ap =~ $re ]] || { echo "bad interface name" >&2; exit 2; }
 
 nat() {  # nat add|del
-  local op=$1; local A=-A I=-I
-  [[ $op == del ]] && { A=-D; I=-D; }
+  local op=$1; local A=-A I=-I fw=--add-rule
+  [[ $op == del ]] && { A=-D; I=-D; fw=--remove-rule; }
   iptables -t nat $A POSTROUTING -s $SUBNET.0/24 ! -o "$ap" -j MASQUERADE 2>/dev/null || true
+  iptables $I INPUT -i "$ap" -j ACCEPT 2>/dev/null || true
   iptables $I FORWARD -i "$ap" -j ACCEPT 2>/dev/null || true
   iptables $I FORWARD -o "$ap" -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || true
+  # firewalld overrides plain iptables rules: add runtime-only direct rules too.
+  if command -v firewall-cmd >/dev/null && firewall-cmd --state &>/dev/null; then
+    firewall-cmd -q --direct $fw ipv4 nat POSTROUTING 0 -s $SUBNET.0/24 ! -o "$ap" -j MASQUERADE 2>/dev/null || true
+    firewall-cmd -q --direct $fw ipv4 filter INPUT 0 -i "$ap" -j ACCEPT 2>/dev/null || true
+    firewall-cmd -q --direct $fw ipv4 filter FORWARD 0 -i "$ap" -j ACCEPT 2>/dev/null || true
+    firewall-cmd -q --direct $fw ipv4 filter FORWARD 0 -o "$ap" -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || true
+  fi
 }
 
 killpid() {
