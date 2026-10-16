@@ -1,5 +1,6 @@
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
+import Gio from 'gi://Gio';
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 export default class Prefs extends ExtensionPreferences {
@@ -25,6 +26,10 @@ export default class Prefs extends ExtensionPreferences {
         trig.connect('changed', () => s.set_strv('trigger-ssids',
             trig.text.split(',').map(x => x.trim()).filter(Boolean)));
         mode.add(trig);
+
+        const notif = new Adw.SwitchRow({title: 'Notifications', subtitle: 'On start, stop, failure and when devices join or leave'});
+        s.bind('notifications', notif, 'active', Gio.SettingsBindFlags.DEFAULT);
+        mode.add(notif);
 
         const hs = new Adw.PreferencesGroup({title: 'Hotspot'});
         page.add(hs);
