@@ -92,6 +92,7 @@ CONF
       stop; exit 4
     fi
     sleep 1
+    chmod 644 $RUN/hostapd.log 2>/dev/null || true   # readable by the extension's log viewer
     if ! [[ -d /proc/$(cat $RUN/hostapd.pid 2>/dev/null || echo x) ]]; then
       tail -n 8 $RUN/hostapd.log >&2 2>/dev/null || true
       stop; exit 4
