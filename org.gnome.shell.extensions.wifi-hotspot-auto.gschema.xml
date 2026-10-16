@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.wifi-hotspot-auto" path="/org/gnome/shell/extensions/wifi-hotspot-auto/">
+    <key name="mode" type="s">
+      <choices><choice value="never"/><choice value="always"/><choice value="auto"/></choices>
+      <default>'never'</default>
+      <summary>Hotspot mode</summary>
+    </key>
+    <key name="trigger-ssids" type="as">
+      <default>[]</default>
+      <summary>Wi-Fi networks that enable the hotspot in auto mode</summary>
+    </key>
+    <key name="hotspot-ssid" type="s"><default>'MyPC-Hotspot'</default><summary>Hotspot name</summary></key>
+    <key name="hotspot-password" type="s"><default>''</default><summary>Hotspot password (min 8 chars)</summary></key>
+    <key name="wifi-interface" type="s"><default>''</default><summary>Physical Wi-Fi interface (empty = auto-detect)</summary></key>
+    <key name="ap-interface" type="s"><default>'ap0'</default><summary>Virtual AP interface name</summary></key>
+  </schema>
+</schemalist>

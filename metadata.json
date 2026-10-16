@@ -1,0 +1,7 @@
+{
+  "uuid": "wifi-hotspot-auto@taghouti",
+  "name": "Wi-Fi Hotspot Auto",
+  "description": "Share your connection as a hotspot while staying connected to Wi-Fi. Modes: never, always, or only when connected to chosen networks.",
+  "shell-version": ["47", "48", "49"],
+  "settings-schema": "org.gnome.shell.extensions.wifi-hotspot-auto"
+}

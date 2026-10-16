@@ -1,0 +1,22 @@
+#!/bin/bash
+# Creates/removes a virtual AP interface next to the physical Wi-Fi interface.
+# Run via pkexec by the Wi-Fi Hotspot Auto GNOME extension.
+set -eu
+action=${1:-}; parent=${2:-}; ap=${3:-}
+re='^[a-zA-Z0-9_-]{1,15}$'
+[[ $parent =~ $re && $ap =~ $re ]] || { echo "bad interface name" >&2; exit 2; }
+case $action in
+  add)
+    ip link show "$ap" &>/dev/null && exit 0
+    mac=$(cat "/sys/class/net/$parent/address")
+    IFS=: read -r a b c d e f <<<"$mac"
+    a=$(printf '%02x' $(( 0x$a | 2 )))
+    f=$(printf '%02x' $(( (0x$f + 1) & 255 )))
+    iw dev "$parent" interface add "$ap" type __ap addr "$a:$b:$c:$d:$e:$f"
+    ;;
+  del)
+    ip link show "$ap" &>/dev/null || exit 0
+    iw dev "$ap" del
+    ;;
+  *) echo "usage: $0 add|del <parent> <ap>" >&2; exit 2 ;;
+esac
