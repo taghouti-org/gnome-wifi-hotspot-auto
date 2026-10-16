@@ -42,6 +42,9 @@ class Indicator extends PanelMenu.Button {
 
         this._status = new PopupMenu.PopupMenuItem('', {reactive: false});
         this.menu.addMenuItem(this._status);
+        this._errorItem = new PopupMenu.PopupMenuItem('', {reactive: false});
+        this._errorItem.visible = false;
+        this.menu.addMenuItem(this._errorItem);
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         this._modeItems = {};
@@ -62,14 +65,18 @@ class Indicator extends PanelMenu.Button {
         this.menu.addMenuItem(prefs);
     }
 
-    update(mode, active, ssid, busy) {
+    update(mode, active, ssid, busy, error) {
         for (const [id, item] of Object.entries(this._modeItems))
             item.setOrnament(id === mode ? PopupMenu.Ornament.DOT : PopupMenu.Ornament.NONE);
         this._icon.opacity = active ? 255 : 110;
-        this._icon.style = active ? 'color: #57e389;' : '';
-        const state = busy ? _('working…') : active ? _('ON') : _('off');
+        this._icon.style = active ? 'color: #57e389;' : error ? 'color: #ffa348;' : '';
+        if (error) this._icon.opacity = 255;
+        const state = busy ? _('working…') : active ? _('ON') : error ? _('FAILED') : _('off');
         this._status.label.text = `${_('Hotspot')}: ${state}  ·  ${_('Wi-Fi')}: ${ssid ?? _('not connected')}`;
         this._addCurrent.visible = !!ssid;
+        this._errorItem.visible = !!error && !active;
+        this._errorItem.label.text = error ? error.split('\n')[0] : '';
+        this._errorItem.label.clutter_text.line_wrap = true;
     }
 });
 
@@ -79,6 +86,7 @@ export default class WifiHotspotAuto extends Extension {
         this._active = false;
         this._busy = false;
         this._pending = false;
+        this._lastError = null;
         this._ssid = null;
         this._apWatch = null;
         this._timer = 0;
@@ -164,7 +172,7 @@ export default class WifiHotspotAuto extends Extension {
     }
 
     _refreshUi() {
-        this._indicator?.update(this.settings.get_string('mode'), this._active, this._ssid, this._busy);
+        this._indicator?.update(this.settings.get_string('mode'), this._active, this._ssid, this._busy, this._lastError);
     }
 
     _schedule(delayMs = 1500) {
@@ -198,12 +206,13 @@ export default class WifiHotspotAuto extends Extension {
         if (!this._indicator) return;
         if (this._busy) { this._pending = true; return; }
         const want = this._wanted();
-        if (want === this._active) { this._refreshUi(); return; }
+        if (want === this._active) { this._lastError = null; this._refreshUi(); return; }
         this._busy = true;
+        this._lastError = null;
         this._refreshUi();
         try {
             const err = want ? await this._start() : await this._stop();
-            if (err) Main.notify('Wi-Fi Hotspot Auto', err);
+            if (err) { this._lastError = err; Main.notify('Wi-Fi Hotspot Auto', err); }
         } finally {
             await this._refreshActive();
             this._busy = false;
