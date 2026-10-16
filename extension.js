@@ -9,16 +9,16 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-const CON_NAME = 'wifi-hotspot-auto-ap';
 const HELPER = '/usr/local/bin/gnome-hotspot-helper';
 const MODES = [['never', 'Never'], ['always', 'Always'], ['auto', 'Only on selected networks']];
 
-function run(argv) {
+function run(argv, stdin = null) {
     return new Promise(resolve => {
         try {
             const p = Gio.Subprocess.new(argv,
-                Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
-            p.communicate_utf8_async(null, null, (proc, res) => {
+                Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE |
+                (stdin !== null ? Gio.SubprocessFlags.STDIN_PIPE : 0));
+            p.communicate_utf8_async(stdin, null, (proc, res) => {
                 try {
                     const [, out, err] = proc.communicate_utf8_finish(res);
                     resolve({ok: proc.get_successful(), out: out ?? '', err: (err ?? '').trim()});
@@ -185,8 +185,13 @@ export default class WifiHotspotAuto extends Extension {
     }
 
     async _refreshActive() {
-        const r = await run(['nmcli', '-t', '-f', 'NAME', 'con', 'show', '--active']);
-        this._active = r.ok && r.out.split('\n').includes(CON_NAME);
+        try {
+            const [ok, data] = GLib.file_get_contents('/run/gnome-hotspot-ext/hostapd.pid');
+            const pid = ok ? new TextDecoder().decode(data).trim() : '';
+            this._active = /^\d+$/.test(pid) && GLib.file_test(`/proc/${pid}`, GLib.FileTest.EXISTS);
+        } catch (e) {
+            this._active = false;
+        }
     }
 
     async _evaluate() {
@@ -216,45 +221,24 @@ export default class WifiHotspotAuto extends Extension {
         if (pw.length < 8) return _('Hotspot password must be at least 8 characters (see Settings)');
         if (!ssid) return _('Hotspot name is empty (see Settings)');
 
-        let r = await run(['pkexec', HELPER, 'add', parent, ap]);
-        if (!r.ok) return `${_('Could not create AP interface. Is the helper installed?')}\n${r.err}`;
-
-        // Wait for NetworkManager to pick the new device up.
-        for (let i = 0; i < 10; i++) {
-            r = await run(['nmcli', '-t', '-f', 'DEVICE,STATE', 'dev']);
-            if (r.out.split('\n').some(l => l.startsWith(`${ap}:`) && !l.endsWith(':unmanaged'))) break;
-            await new Promise(res => GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => { res(); return GLib.SOURCE_REMOVE; }));
-        }
-
-        await run(['nmcli', 'con', 'delete', CON_NAME]);
-        const args = ['nmcli', 'con', 'add', 'type', 'wifi', 'ifname', ap, 'con-name', CON_NAME,
-            'autoconnect', 'no', 'ssid', ssid, '802-11-wireless.mode', 'ap',
-            'ipv4.method', 'shared', 'wifi-sec.key-mgmt', 'wpa-psk', 'wifi-sec.psk', pw];
         // The AP must share the channel of the active client connection.
+        let chan = 0;
         const apObj = this._currentAp();
         if (apObj) {
             const freq = apObj.get_frequency();
-            args.push('802-11-wireless.band', freq >= 5000 ? 'a' : 'bg',
-                '802-11-wireless.channel', String(NM.utils_wifi_freq_to_channel(freq)));
+            if (freq >= 5260 && freq <= 5720)
+                return _('Cannot start the hotspot: your Wi-Fi is on a DFS channel (%d MHz), where this card cannot host an access point. Use a 2.4 GHz or non-DFS 5 GHz network.').format(freq);
+            chan = NM.utils_wifi_freq_to_channel(freq);
         }
-        r = await run(args);
-        if (!r.ok) return `${_('Could not create hotspot profile')}\n${r.err}`;
-
-        r = await run(['nmcli', 'con', 'up', CON_NAME, 'ifname', ap]);
-        if (!r.ok) {
-            await run(['nmcli', 'con', 'delete', CON_NAME]);
-            const dfs = apObj && apObj.get_frequency() >= 5260 && apObj.get_frequency() <= 5720;
-            return `${_('Hotspot failed to start')}${dfs ? ` (${_('your Wi-Fi uses a DFS channel, which many cards cannot host an AP on')})` : ''}\n${r.err}`;
-        }
+        const r = await run(['pkexec', HELPER, 'start', parent, ap, ssid, String(chan)], `${pw}\n`);
+        if (!r.ok) return `${_('Hotspot failed to start')}\n${r.err}`;
         return null;
     }
 
     async _stop() {
         const ap = this.settings.get_string('ap-interface');
-        const parent = this._wifiIface();
-        await run(['nmcli', 'con', 'down', CON_NAME]);
-        await run(['nmcli', 'con', 'delete', CON_NAME]);
-        if (parent) await run(['pkexec', HELPER, 'del', parent, ap]);
+        const parent = this._wifiIface() ?? 'none';
+        await run(['pkexec', HELPER, 'stop', parent, ap]);
         return null;
     }
 }
