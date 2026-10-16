@@ -133,15 +133,13 @@ class Indicator extends PanelMenu.Button {
         const modeLabel = MODES.find(m => m[0] === mode)?.[1] ?? mode;
         this._modeMenu.label.text = `${_('Mode')}: ${_(modeLabel)}`;
 
-        let line;
-        if (active)
-            line = `${hotspotSsid}${channel ? ` · ch ${channel}` : ''} · ${clients.length} ${_('device(s)')}`;
+        const line = active
+            ? `${hotspotSsid}${channel ? ` · ch ${channel}` : ''} · ${clients.length} ${_('device(s)')}`
+            : `${_('Off')} · Wi-Fi: ${ssid ?? _('not connected')}`;
         this._traffic.visible = active;
         this._traffic.label.text = traffic
             ? `↓ ${fmtBytes(traffic.down)} (${fmtBytes(traffic.downRate)}/s)   ↑ ${fmtBytes(traffic.up)} (${fmtBytes(traffic.upRate)}/s)`
             : '';
-        else
-            line = `${_('Off')} · Wi-Fi: ${ssid ?? _('not connected')}`;
         this._status.label.text = line;
 
         this._icon.opacity = active || error ? 255 : 110;
