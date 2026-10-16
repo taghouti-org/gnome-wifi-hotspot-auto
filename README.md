@@ -31,12 +31,22 @@ gnome-extensions enable wifi-hotspot-auto@taghouti
 ```
 
 ## Use
-1. Click the hotspot icon in the top bar → **Settings**.
-2. Set the **hotspot name** and **password** (min 8 characters).
-3. Pick a mode, either in Settings or from the top-bar menu.
-4. For auto mode: connect to the network you want, open the menu and click **Add current network to triggers** (or type SSIDs, comma-separated, in Settings).
+1. Click the hotspot icon in the top bar → **Settings**, set the **hotspot name** and **password** (min 8 characters).
+2. Pick a mode (Settings or the top-bar menu).
+3. For selected-networks mode: connect to the network you want, open the menu and click **Add current network to triggers** (or type SSIDs, comma-separated, in Settings).
 
-The icon is dimmed when the hotspot is off; the menu shows hotspot state and current Wi-Fi.
+### Top-bar menu
+- **Hotspot switch** – quick on/off (sets mode to Always / Never)
+- **Status** – hotspot name, channel, number of devices, total traffic (↓ download / ↑ upload) and live speed
+- **Connected devices** – per device: hostname, IP, MAC, signal strength, traffic and speed
+- **Mode** – Never / Always / Selected networks
+- **Show logs** – extension events, hostapd log, traffic and DHCP leases (Refresh / Copy)
+- **Settings**
+
+The panel icon is **green** (with a device count) when the hotspot is on, **orange** if it failed to start (the reason is shown in the menu), and dim when off.
+
+### Notifications
+Hotspot on/off, failures, and devices joining/leaving (can be disabled in Settings).
 
 ## Limitations
 - The hotspot must use the **same channel** as your Wi-Fi connection (single radio), so speed is shared and a 5 GHz network gives a 5 GHz-only hotspot.
