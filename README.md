@@ -21,7 +21,7 @@ NetworkManager can't run a hotspot on the interface that is also connected as a 
 
 ## Install
 ```bash
-git clone https://gist.github.com/267a91e305a469835a45992c9de30db0.git wifi-hotspot-auto
+git clone https://github.com/taghouti-org/gnome-wifi-hotspot-auto.git wifi-hotspot-auto
 cd wifi-hotspot-auto
 bash install.sh
 ```
@@ -65,7 +65,3 @@ gnome-extensions disable wifi-hotspot-auto@taghouti
 rm -rf ~/.local/share/gnome-shell/extensions/wifi-hotspot-auto@taghouti
 sudo rm /etc/NetworkManager/conf.d/99-hotspot-ext.conf /usr/local/bin/gnome-hotspot-helper /usr/share/polkit-1/actions/org.gnome.hotspotext.helper.policy
 ```
-
----
-
-First published as a [gist](https://gist.github.com/taghouttarek/267a91e305a469835a45992c9de30db0).
